@@ -49,9 +49,8 @@ There are two main ways to use CypherTrace: directly via its Docker image or usi
 
    * **Pull the Image:**
         ```bash
-        docker pull yourdockerhubusername/cyphertrace:latest
+        docker pull abhishek56/cyphertrace:latest
         ```
-        *(Replace `yourdockerhubusername` with your actual Docker Hub username where the image is hosted. For example: `abhishek56/cyphertrace:latest`)*
 
    * **Database Volume:** CypherTrace uses a persistent Docker volume to store its vulnerability database. Docker will create this volume automatically on first use if it doesn't exist. The recommended volume name is `vuln_scanner_db_data`.
 
@@ -63,7 +62,7 @@ There are two main ways to use CypherTrace: directly via its Docker image or usi
         * *(You will need to specify where users can download this. For example, from the "Releases" page of your GitHub repository.)*
         * Example: "Download the latest `cyphertrace.exe` (for Windows) or `cyphertrace` (for Linux/macOS) from the [GitHub Releases page](https://github.com/Abhishek-Chidambaram/cyphertrace-scanner/releases)."
    * **Ensure Docker is Running:** The executable still requires Docker to be running in the background.
-   * **Image Pull:** The first time you run a command with the executable, it will attempt to pull the `yourdockerhubusername/cyphertrace:latest` Docker image if it's not already present locally.
+   * **Image Pull:** The first time you run a command with the executable, it will attempt to pull the `abhishek56/cyphertrace:latest` Docker image if it's not already present locally.
 
 ## 🛠️ Usage
 
@@ -173,22 +172,14 @@ If you want to build the Docker image or the CLI executable yourself:
    ```
    The executable will be in the `dist/` folder.
 
-## 📜 License
 
-This project is licensed under the **[YOUR CHOSEN LICENSE HERE]**. Please see the `LICENSE` file for details.
-
-*(**Action for you:** Choose a license (e.g., MIT, Apache 2.0, GPLv3). Create a `LICENSE` file in your project root containing the full text of that license. Then update the line above.)*
-
-**Example if you choose MIT:**
-This project is licensed under the **MIT License**. Please see the `LICENSE` file for details.
-
-## 🤝 Contributing (Optional)
+## 🤝 Contributing
 
 *(If you are open to contributions, add guidelines here. For example:*
 Contributions are welcome! Please feel free to submit a Pull Request or open an Issue.
 *)*
 
-## 🙏 Acknowledgements (Optional)
+## 🙏 Acknowledgements
 
 *(If you used other open-source libraries or tools that you'd like to acknowledge specifically, or if you had help, you can add that here.)*
 
