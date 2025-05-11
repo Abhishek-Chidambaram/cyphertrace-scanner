@@ -5,7 +5,7 @@ import os
 import pathlib
 
 # --- Configuration ---
-CYPHERTRACE_IMAGE_NAME = "cyphertrace:latest"
+CYPHERTRACE_IMAGE_NAME = "abhishek56/cyphertrace:latest"
 DB_VOLUME_NAME = "vuln_scanner_db_data"
 DB_INTERNAL_MOUNT_PATH = "/home/appuser/.local/share/SimpleVulnScanner"
 INPUT_INTERNAL_MOUNT_PATH = "/inputs"
