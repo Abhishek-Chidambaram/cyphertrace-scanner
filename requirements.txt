@@ -1,0 +1,8 @@
+# requirements.txt
+packaging
+requests
+cvss
+pyyaml
+platformdirs
+python-debian
+openai

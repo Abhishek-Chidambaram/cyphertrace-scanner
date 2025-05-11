@@ -1,0 +1,21 @@
+# config.yaml
+# Default output format
+format: text
+
+# Default severity threshold (e.g., only show HIGH and CRITICAL)
+# Options: CRITICAL, HIGH, MEDIUM, LOW, NONE, UNKNOWN
+severity_threshold: UNKNOWN
+
+# List of vulnerabilities to always ignore
+ignore_vulnerabilities:
+  - CVE-2020-28500 # Example: Ignore one of the MEDIUM lodash vulns
+  - GHSA-p6mc-m468-83gw # Example: Ignore by GHSA ID too
+
+auto_update_interval_days: 7
+
+nvd_max_pages_auto_update: 20
+
+# Future settings could go here
+# nvd_max_pages: 50
+# api_keys:
+#   google_gemini: set_via_env_var_is_better

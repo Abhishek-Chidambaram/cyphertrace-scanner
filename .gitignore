@@ -1,0 +1,70 @@
+# .gitignore for CypherTrace project
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+pip-wheel-metadata/
+venv/
+env/
+.Python/
+*.cfg
+*.log
+*.pot
+*.mo
+
+# SQLite database files (should be on a volume in Docker, not in Git)
+*.sqlite
+*.sqlite3
+*.db
+*.db3
+*.sqlite-journal
+*.sqlite-wal
+# If your DB_FILE in vulndb.py has a specific name, add it:
+# vuln_db.sqlite
+# vuln_db_local.sqlite
+
+# Build artifacts
+dist/
+build/
+*.egg
+*.spec
+
+# Docker specific (usually not needed if Dockerfile is clean, but good practice)
+# .dockerignore is usually enough for Docker context, but this prevents committing image tars if generated locally
+*.tar
+# If you save Docker images locally as tarballs for testing
+
+# Output files
+*.html
+*.json
+# Add other report formats if you have them
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sublime-workspace
+*.sublime-project
+
+# OS specific
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Sensitive files (if any, though config.yaml seems okay for this project)
+# secrets.yaml
+# .env
+
+# PyInstaller output directory (if you build executables locally)
+# If you named your executable something other than 'cyphertrace', adjust accordingly.
+# Or more generally, just 'dist/' as added in build artifacts.
+
+# Test inputs/outputs (if you keep them in the project dir but don't want to commit)
+# scanner_inputs/
+# scanner_outputs/

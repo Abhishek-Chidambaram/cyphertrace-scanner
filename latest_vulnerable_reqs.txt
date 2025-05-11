@@ -1,0 +1,7 @@
+# latest_vulnerable_reqs.txt
+Pillow==10.2.0
+Werkzeug==3.0.0
+#aiohttp==3.9.1
+
+
+

@@ -1,0 +1,41 @@
+# .dockerignore
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+venv/
+env/
+.Python/
+
+# Git specific
+.git/
+.gitignore
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Project specific (files not needed in the image)
+data/                     # If it contains large, temporary, or mounted data
+*.tar                     # Input tarballs for scanning
+*.html                    # Output reports
+*.sqlite                  # The database will be on a volume
+*.sqlite-journal
+*.sqlite-wal
+requirements-dev.txt      # Use the minimal requirements.txt for the image
+sample-reqs.txt
+latest_vulnerable_reqs.txt
+package-lock.json         # If only used as an input example
+# Add any other logs, temporary files, or large datasets
