@@ -1,0 +1,58 @@
+name: Docker Build and Push - CypherTrace
+
+# Controls when the workflow will run
+on:
+  push:
+    branches:
+      - main # Runs on pushes to the main branch
+    tags:
+      - 'v*.*.*' # Runs on pushes of version tags like v1.0.0, v1.2.3
+  pull_request:
+    branches:
+      - main # Optional: build on pull requests to main for testing, but don't push
+
+jobs:
+  build-and-push-docker-image:
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Checks out your repository under $GITHUB_WORKSPACE
+
+      - name: Set up QEMU # For multi-platform builds (optional but good practice)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx # A Docker CLI plugin for extended build capabilities
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta # Give this step an ID so we can refer to its outputs
+        uses: docker/metadata-action@v5
+        with:
+          images: abhishek56/cyphertrace 
+          # For pushes to main, it will use 'latest' tag.
+          # For version tags (e.g., v1.2.3), it will use '1.2.3' and 'latest'.
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: . # Build context is the root of the repository
+          file: ./Dockerfile # Path to your Dockerfile
+          push: ${{ github.event_name != 'pull_request' }} # Only push if not a pull request
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha # Enable GitHub Actions cache for Docker layers
+          cache-to: type=gha,mode=max
