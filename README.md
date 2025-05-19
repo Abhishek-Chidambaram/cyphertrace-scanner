@@ -59,7 +59,6 @@ There are two main ways to use CypherTrace: directly via its Docker image or usi
    A standalone executable CLI wrapper is provided for convenience. This executable internally calls the Docker image.
 
    * **Download the Executable:**
-        * *(You will need to specify where users can download this. For example, from the "Releases" page of your GitHub repository.)*
         * Example: "Download the latest `cyphertrace.exe` (for Windows) or `cyphertrace` (for Linux/macOS) from the [GitHub Releases page](https://github.com/Abhishek-Chidambaram/cyphertrace-scanner/releases)."
    * **Ensure Docker is Running:** The executable still requires Docker to be running in the background.
    * **Image Pull:** The first time you run a command with the executable, it will attempt to pull the `abhishek56/cyphertrace:latest` Docker image if it's not already present locally.
@@ -175,14 +174,6 @@ If you want to build the Docker image or the CLI executable yourself:
 
 ## 🤝 Contributing
 
-*(If you are open to contributions, add guidelines here. For example:*
 Contributions are welcome! Please feel free to submit a Pull Request or open an Issue.
-*)*
-
-## 🙏 Acknowledgements
-
-*(If you used other open-source libraries or tools that you'd like to acknowledge specifically, or if you had help, you can add that here.)*
 
 ---
-
-*This README was generated for CypherTrace.*
