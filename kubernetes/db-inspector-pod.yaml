@@ -1,0 +1,21 @@
+# db-inspector-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db-inspector
+  namespace: security-tools
+spec:
+  containers:
+  - name: inspector
+    image: alpine/sqlite # Alpine image with sqlite3 pre-installed
+    command: ["/bin/sh", "-c"]
+    args: ["echo 'Inspector pod running. SQLite DB is at /mnt/db/SimpleVulnScanner/vuln_db.sqlite. Use 'sqlite3 /mnt/db/SimpleVulnScanner/vuln_db.sqlite .tables' to inspect.'; sleep 3600"] # Keep it running
+    volumeMounts:
+    - name: db-volume
+      # Mount the PVC to /mnt/db inside this inspector pod
+      mountPath: /mnt/db
+  volumes:
+  - name: db-volume
+    persistentVolumeClaim:
+      claimName: cyphertrace-db-pvc # This MUST match your DB PVC name
+  restartPolicy: Never

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cyphertrace-db-pvc
+  namespace: security-tools # Use if you created the namespace
+spec:
+  accessModes:
+    - ReadWriteOnce # Typically sufficient for a single pod job
+  resources:
+    requests:
+      storage: 1Gi # Adjust size as needed for your SQLite DB
+  # storageClassName: standard # Uncomment and set if needed for your cluster
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cyphertrace-reports-pvc
+  namespace: security-tools # Use if you created the namespace
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi # Adjust size as needed for reports
+  # storageClassName: standard # Uncomment and set if needed

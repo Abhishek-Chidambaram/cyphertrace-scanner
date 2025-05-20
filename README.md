@@ -179,10 +179,3 @@ If you want to build the Docker image or the CLI executable yourself:
 Contributions are welcome! Please feel free to submit a Pull Request or open an Issue.
 *)*
 
-## 🙏 Acknowledgements
-
-*(If you used other open-source libraries or tools that you'd like to acknowledge specifically, or if you had help, you can add that here.)*
-
----
-
-*This README was generated for CypherTrace.*

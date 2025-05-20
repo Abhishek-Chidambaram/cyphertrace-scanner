@@ -6,3 +6,4 @@ pyyaml
 platformdirs
 python-debian
 openai
+lxml

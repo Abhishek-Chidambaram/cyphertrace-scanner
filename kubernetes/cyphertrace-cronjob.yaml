@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cyphertrace-scanner-daily
+  namespace: security-tools # Use if you created the namespace
+spec:
+  # Schedule to run daily at 2:00 AM UTC
+  schedule: "0 2 * * *"
+  # schedule: "*/5 * * * *" # For testing: run every 5 minutes
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 7200 # Job can run for max 2 hours
+      backoffLimit: 2 # Retry failed jobs 2 times
+      template:
+        spec:
+          restartPolicy: OnFailure
+          volumes:
+            - name: vuln-db-storage
+              persistentVolumeClaim:
+                claimName: cyphertrace-db-pvc
+            - name: scan-reports-storage
+              persistentVolumeClaim:
+                claimName: cyphertrace-reports-pvc
+            - name: workspace # Temporary storage for the pod
+              emptyDir: {}
+
+          containers:
+            - name: cyphertrace-scanner
+              image: abhishek56/cyphertrace:latest # Ensure this is the image with scan_runner.sh
+              imagePullPolicy: Always
+              # The entrypoint.sh in the image now calls scan_runner.sh,
+              # so we don't need to specify command/args here unless
+              # scan_runner.sh is designed to accept them.
+              # Our current scan_runner.sh is self-contained.
+              env:
+                - name: NVD_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: nvd-api-key-secret
+                      key: api_key
+              volumeMounts:
+                - name: vuln-db-storage
+                  # This MUST match where platformdirs/XDG_DATA_HOME expects the DB
+                  mountPath: /home/appuser/.local/share/SimpleVulnScanner
+                - name: scan-reports-storage
+                  # scan_runner.sh saves reports here
+                  mountPath: /reports
+                - name: workspace
+                  # scan_runner.sh creates dummy files here
+                  mountPath: /workspace
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "1Gi"
+                  cpu: "1"

@@ -1,0 +1,19 @@
+# reports-inspector-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: reports-inspector
+  namespace: security-tools
+spec:
+  containers:
+  - name: inspector
+    image: alpine
+    command: ["/bin/sh", "-c", "echo 'Inspector pod running. Reports are in /mnt/reports. Use ls -l /mnt/reports.'; sleep 3600"]
+    volumeMounts:
+    - name: reports-volume
+      mountPath: /mnt/reports
+  volumes:
+  - name: reports-volume
+    persistentVolumeClaim:
+      claimName: cyphertrace-reports-pvc
+  restartPolicy: Never
