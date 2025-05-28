@@ -1,0 +1,10 @@
+github.com/gin-gonic/gin v1.8.1 h1:4idEAncQnU5cB7BeOkPtxjfCSye0AAm1R0RVIqJ+Jmg=
+github.com/gin-gonic/gin v1.8.1/go.mod h1:Oy8PlIcZWGh9RtJjoo0i6jxa/ikMqC0h2Y2aKdgf5YI=
+github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
+github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
+golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d h1:ObdrDkeb4kJdCP557AjRjq69pTHfNouLtWZG7j9rPN8=
+golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d/go.mod h1:IxL2hFSoiIU6Tq3DiUZM+u7FLk4H9p6J6w9hf87ly9Y=
+github.com/bytedance/sonic v1.5.0 h1:ei0gXX2t3t3wy9K7Hq4O3JzXxVh14MmikmKT43aBx1o=
+github.com/bytedance/sonic v1.5.0/go.mod h1:i736AoUSU+tO4kA7aJWG7ZbJ8D6x6tOq3mJpkN04W04=
+github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06 h1:qSGYFH7+rLDF8RcEfkzfwfN9gQ1Uoxl/UyL+2V6x2xY=
+github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06/go.mod h1:46iQ1PPqi79xrW8vv2RO3h2PGWb5c04gK+7ndc6i3DE= 

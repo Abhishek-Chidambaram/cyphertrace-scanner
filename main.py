@@ -19,6 +19,7 @@ from vuln_scanner.parser import parse_requirements, parse_package_lock
 from vuln_scanner import vulndb, fetcher, scanner, image_parser, ai_analyzer # ai_analyzer might be optional
 from vuln_scanner.models import ScanResult, Package # For type hinting
 from vuln_scanner import registry_client # <-- NEW: Import the registry client
+from vuln_scanner.go_parser import parse_go_dependencies
 
 # --- Config File Handling ---
 CONFIG_FILENAME = "config.yaml"
@@ -145,6 +146,77 @@ def handle_registry_scan(args: argparse.Namespace, config: dict) -> list[ScanRes
 
     return scan_results
 
+# --- NEW Function to Handle Go Module Scans ---
+def handle_go_module_scan(args: argparse.Namespace, config: dict) -> list[ScanResult]:
+    """
+    Handles scanning Go module dependencies from go.mod file.
+    """
+    go_mod_path = Path(args.go_mod)
+    go_sum_path = Path(args.go_sum) if args.go_sum else None
+    
+    print(f"\n--- Starting GO MODULE SCAN for: {go_mod_path} ---")
+    
+    if not go_mod_path.is_file():
+        print(f"Error: Go module file not found: {go_mod_path}", file=sys.stderr)
+        return []
+    
+    if go_sum_path and not go_sum_path.is_file():
+        print(f"Warning: Go sum file not found: {go_sum_path}. Proceeding without checksum verification.")
+        go_sum_path = None
+    
+    try:
+        # Ensure DB connection is established for vulnerability scanning
+        vulndb.get_db_connection()
+        
+        # Parse Go dependencies
+        go_deps = parse_go_dependencies(str(go_mod_path), str(go_sum_path) if go_sum_path else None)
+        
+        if not go_deps:
+            print("No Go dependencies found in the module file.")
+            return []
+        
+        print(f"Found {len(go_deps)} Go dependencies to scan for vulnerabilities...")
+        
+        # Convert dicts to Package objects
+        go_packages = []
+        for dep in go_deps:
+            try:
+                pkg = Package(
+                    name=dep['name'],
+                    version=dep['version'],
+                    ecosystem='Go'
+                )
+                go_packages.append(pkg)
+            except Exception as e:
+                print(f"Warning: Could not create Package object for {dep}: {e}")
+        
+        # Scan for vulnerabilities using the existing scanner
+        scan_results = scanner.scan_application_dependencies(go_packages)
+        
+        return scan_results
+        
+    except Exception as e:
+        print(f"Error during Go module scan: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        return []
+
+def detect_file_type(file_path: str) -> str:
+    """Detect the type of dependency file."""
+    filename = os.path.basename(file_path).lower()
+    
+    if filename == 'go.mod':
+        return 'go_mod'
+    elif filename == 'go.sum':
+        return 'go_sum'
+    elif filename.endswith('.txt'):  # For requirements.txt
+        return 'python'
+    elif filename == 'package-lock.json':
+        return 'npm'
+    elif filename.endswith(('.war', '.jar', '.ear')):
+        return 'java_archive'
+    
+    return 'unknown'
 
 # --- Main Execution Logic ---
 def main():
@@ -156,11 +228,16 @@ def main():
     # --- Scan Target Group ---
     input_group = parser.add_argument_group('Scan Target (Specify one)')
     target_exclusive_group = input_group.add_mutually_exclusive_group(required=False) # Will be required if no update action
-    target_exclusive_group.add_argument( "input_file", type=str, nargs='?', help="Path to input file (requirements*.txt, package-lock.json)." )
-    target_exclusive_group.add_argument( "--image-tar", type=str, metavar='TAR_PATH', help="Path to a local container image tarball ('docker save' output)." )
-    target_exclusive_group.add_argument( "--registry-image", type=str, metavar='IMAGE_NAME:TAG', help="Name of container image in a remote registry (e.g., ubuntu:latest). Currently supports public Docker Hub images.") # <-- NEW ARGUMENT
-    target_exclusive_group.add_argument(  "--java-archive", type=str, metavar='ARCHIVE_PATH_IN_CONTAINER', help="Path to Java archive (WAR, JAR, EAR) inside the container to scan."
-                                        )
+    target_exclusive_group.add_argument("input_file", type=str, nargs='?', help="Path to input file (requirements*.txt, package-lock.json, go.mod).")
+    target_exclusive_group.add_argument("--image-tar", type=str, metavar='TAR_PATH', help="Path to a local container image tarball ('docker save' output).")
+    target_exclusive_group.add_argument("--registry-image", type=str, metavar='IMAGE_NAME:TAG', help="Name of container image in a remote registry (e.g., ubuntu:latest). Currently supports public Docker Hub images.")
+    target_exclusive_group.add_argument("--java-archive", type=str, metavar='ARCHIVE_PATH_IN_CONTAINER', help="Path to Java archive (WAR, JAR, EAR) inside the container to scan.")
+    target_exclusive_group.add_argument("--go-mod", type=str, metavar='GO_MOD_PATH', help="Path to Go module file (go.mod) to scan for dependency vulnerabilities.")
+    
+    # --- Go-specific options (outside the exclusive group) ---
+    go_group = parser.add_argument_group('Go Module Options')
+    go_group.add_argument( "--go-sum", type=str, metavar='GO_SUM_PATH', help="Path to go.sum file for dependency verification (optional, used with --go-mod).") # <-- NEW: Go sum argument)
+    
     # --- Database Update Group ---
     update_group = parser.add_argument_group('Database Update Options')
     update_group.add_argument( "--update-db", action="store_true", help="Fetch/Update NVD data." )
@@ -251,11 +328,13 @@ def main():
     scan_target_path_obj: Optional[Path] = None # For file-based scans
 
     # Ensure at least one scan target is provided if no update action was performed
-    if not is_update_action and not args.input_file and not args.image_tar and not args.registry_image and not args.java_archive:
-        parser.error("No scan target specified (input_file, --image-tar, or --registry-image, --java-archive) and no update action was taken.")
+    if not is_update_action and not args.input_file and not args.image_tar and not args.registry_image and not args.java_archive and not args.go_mod:
+        parser.error("No scan target specified (input_file, --image-tar, --registry-image, --java-archive, or --go-mod) and no update action was taken.")
 
     try: # Main try block for scanning, ensures DB connection is closed
-        if args.registry_image: # <-- NEW: Handle registry image scan
+        if args.go_mod:
+            final_results = handle_go_module_scan(args, config)
+        elif args.registry_image: # <-- NEW: Handle registry image scan
             # handle_registry_scan will manage its own DB connection if registry_client.py does
             # Or, we ensure it's open here and closed in finally.
             # Current registry_client.scan_image_from_registry handles its own DB connection lifecycle.
@@ -330,23 +409,37 @@ def main():
 
         elif args.input_file:
             scan_target_path_obj = Path(args.input_file)
-            file_name = scan_target_path_obj.name
-            scan_target_type = None
-            if file_name.endswith('.txt'): scan_target_type = "requirements"; print(f"Selected target: Requirements File '{scan_target_path_obj}'")
-            elif file_name == 'package-lock.json': scan_target_type = "package-lock"; print(f"Selected target: Lockfile '{scan_target_path_obj}'")
-            else: print(f"Error: Unsupported input file type: {file_name}.", file=sys.stderr); sys.exit(1)
-
-            if not scan_target_path_obj.is_file(): print(f"Error: Scan target file not found: {scan_target_path_obj}", file=sys.stderr); sys.exit(1)
+            file_type = detect_file_type(str(scan_target_path_obj))
             
-            print("\n--- Application Dependency Scan ---")
-            # Ensure DB connection for app scan
-            vulndb.get_db_connection()
-            app_packages = []
-            file_content = scan_target_path_obj.read_text(encoding='utf-8', errors='ignore')
-            if scan_target_type == "requirements": app_packages = parse_requirements(file_content, str(scan_target_path_obj))
-            elif scan_target_type == "package-lock": app_packages = parse_package_lock(file_content, str(scan_target_path_obj))
-            if app_packages: final_results = scanner.scan_application_dependencies(app_packages)
-            else: print("No packages parsed from input file.")
+            if file_type == 'go_mod':
+                # If a go.mod file is provided as input_file, use it with handle_go_module_scan
+                args.go_mod = str(scan_target_path_obj)  # Set the go_mod argument
+                final_results = handle_go_module_scan(args, config)
+            elif file_type == 'python':
+                print(f"Selected target: Requirements File '{scan_target_path_obj}'")
+                print("\n--- Application Dependency Scan ---")
+                vulndb.get_db_connection()
+                app_packages = parse_requirements(scan_target_path_obj.read_text(encoding='utf-8', errors='ignore'), str(scan_target_path_obj))
+                if app_packages:
+                    final_results = scanner.scan_application_dependencies(app_packages)
+                else:
+                    print("No packages parsed from input file.")
+            elif file_type == 'npm':
+                print(f"Selected target: Lockfile '{scan_target_path_obj}'")
+                print("\n--- Application Dependency Scan ---")
+                vulndb.get_db_connection()
+                app_packages = parse_package_lock(scan_target_path_obj.read_text(encoding='utf-8', errors='ignore'), str(scan_target_path_obj))
+                if app_packages:
+                    final_results = scanner.scan_application_dependencies(app_packages)
+                else:
+                    print("No packages parsed from input file.")
+            else:
+                print(f"Error: Unsupported input file type: {scan_target_path_obj.name}.", file=sys.stderr)
+                sys.exit(1)
+
+            if not scan_target_path_obj.is_file():
+                print(f"Error: Scan target file not found: {scan_target_path_obj}", file=sys.stderr)
+                sys.exit(1)
 
         elif args.java_archive: # +++ THIS IS YOUR EXISTING BLOCK +++
             scan_target_path_obj = Path(args.java_archive)

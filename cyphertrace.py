@@ -249,3 +249,55 @@ def scan_java_archive_command(input_archive_host_path, output_format, output_fil
 
 if __name__ == "__main__":
     cli()
+
+@cli.command("scan-go-mod")
+@click.argument("input_file_host_path", type=click.Path(exists=True, dir_okay=False, resolve_path=True))
+@click.option("--format", "output_format", type=click.Choice(['text', 'json', 'html'], case_sensitive=False), default='text', show_default=True, help="Output format.")
+@click.option("--output-file", "output_file_host_path", type=click.Path(resolve_path=True, dir_okay=False), help="Path on your computer to save the report output.")
+@click.option("--severity-threshold", type=click.Choice(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'NONE', 'UNKNOWN'], case_sensitive=False), help="Minimum severity to report.")
+@click.option("--ignore", type=str, help="Comma-separated vulnerability IDs to ignore.")
+@click.option("--include-sum", type=click.Path(exists=True, dir_okay=False, resolve_path=True), help="Path to go.sum file for additional version verification.")
+def scan_go_mod(input_file_host_path, output_format, output_file_host_path, severity_threshold, ignore, include_sum):
+    """Scans a Go module file (go.mod) for vulnerabilities."""
+    
+    input_file_on_host = pathlib.Path(input_file_host_path)
+    host_input_dir_for_mount = str(input_file_on_host.parent)
+    container_input_file_arg_for_main_py = f"{INPUT_INTERNAL_MOUNT_PATH}/{input_file_on_host.name}"
+
+    scanner_args_for_main_py = ["--go-mod", container_input_file_arg_for_main_py]
+    additional_volume_mounts_for_docker = ["-v", f"{host_input_dir_for_mount}:{INPUT_INTERNAL_MOUNT_PATH}"]
+
+    # Handle go.sum file if provided
+    if include_sum:
+        sum_file_on_host = pathlib.Path(include_sum)
+        # If go.sum is in a different directory, we need to mount that too
+        sum_host_dir = str(sum_file_on_host.parent)
+        if sum_host_dir != host_input_dir_for_mount:
+            additional_volume_mounts_for_docker.extend(["-v", f"{sum_host_dir}:{INPUT_INTERNAL_MOUNT_PATH}/sum_dir"])
+            container_sum_file_arg = f"{INPUT_INTERNAL_MOUNT_PATH}/sum_dir/{sum_file_on_host.name}"
+        else:
+            container_sum_file_arg = f"{INPUT_INTERNAL_MOUNT_PATH}/{sum_file_on_host.name}"
+        scanner_args_for_main_py.extend(["--go-sum", container_sum_file_arg])
+
+    if output_format: 
+        scanner_args_for_main_py.extend(["--format", output_format])
+    if output_file_host_path:
+        output_file_on_host = pathlib.Path(output_file_host_path)
+        host_output_dir_for_mount = str(output_file_on_host.parent)
+        container_output_file_arg_for_main_py = f"{OUTPUT_INTERNAL_MOUNT_PATH}/{output_file_on_host.name}"
+        scanner_args_for_main_py.extend(["--output-file", container_output_file_arg_for_main_py])
+        additional_volume_mounts_for_docker.extend(["-v", f"{host_output_dir_for_mount}:{OUTPUT_INTERNAL_MOUNT_PATH}"])
+        output_file_on_host.parent.mkdir(parents=True, exist_ok=True)
+    if severity_threshold: 
+        scanner_args_for_main_py.extend(["--severity-threshold", severity_threshold.upper()])
+    if ignore: 
+        scanner_args_for_main_py.extend(["--ignore", ignore])
+
+    command = _build_docker_run_command(
+        image_name=CYPHERTRACE_IMAGE_NAME,
+        db_volume_name=DB_VOLUME_NAME,
+        db_internal_path=DB_INTERNAL_MOUNT_PATH,
+        additional_volume_mounts=additional_volume_mounts_for_docker,
+        scanner_main_py_args=scanner_args_for_main_py
+    )
+    _run_docker_command(command, f"Go module scan for {input_file_on_host.name}")
