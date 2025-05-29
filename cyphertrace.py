@@ -247,8 +247,6 @@ def scan_java_archive_command(input_archive_host_path, output_format, output_fil
     )
     _run_docker_command(command, f"Java archive scan for {archive_on_host.name}")
 
-if __name__ == "__main__":
-    cli()
 
 @cli.command("scan-go-mod")
 @click.argument("input_file_host_path", type=click.Path(exists=True, dir_okay=False, resolve_path=True))
@@ -301,3 +299,6 @@ def scan_go_mod(input_file_host_path, output_format, output_file_host_path, seve
         scanner_main_py_args=scanner_args_for_main_py
     )
     _run_docker_command(command, f"Go module scan for {input_file_on_host.name}")
+
+if __name__ == "__main__":
+    cli()
