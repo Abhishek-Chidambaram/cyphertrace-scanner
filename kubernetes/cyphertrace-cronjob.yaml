@@ -28,6 +28,10 @@ spec:
             - name: cyphertrace-scanner
               image: abhishek56/cyphertrace:latest # Ensure this is the image with scan_runner.sh
               imagePullPolicy: Always
+              securityContext:
+                runAsUser: 1000
+                runAsGroup: 1000
+                readOnlyRootFilesystem: true
               # The entrypoint.sh in the image now calls scan_runner.sh,
               # so we don't need to specify command/args here unless
               # scan_runner.sh is designed to accept them.
